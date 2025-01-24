@@ -4,9 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleViewButton = document.getElementById('toggle-view');
     const toggleBackButton = document.getElementById('toggle-back');
     const flipContainer = document.querySelector('.flip-container');
+    const dayCheckboxes = document.querySelectorAll('.days-list input[type="checkbox"]');
 
     // Carregar dados salvos
-    loadExercisesFromBackend();
+    loadExercises();
+    loadDayStates();
 
     // Adicionar exercício
     exerciseForm.addEventListener('submit', (e) => {
@@ -17,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const weight = document.getElementById('exercise-weight').value;
 
         const exercise = { name, reps, sets, weight };
-        saveExerciseToBackend(exercise);
+        saveExercise(exercise);
         addExerciseToList(exercise);
         exerciseForm.reset();
     });
@@ -32,34 +34,22 @@ document.addEventListener('DOMContentLoaded', () => {
         flipContainer.classList.remove('flipped');
     });
 
-    async function saveExerciseToBackend(exercise) {
-        try {
-            const response = await fetch('https://your-backend-url.com/exercises', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(exercise),
-            });
-            if (!response.ok) {
-                throw new Error('Erro ao salvar no backend');
-            }
-        } catch (error) {
-            console.error('Erro:', error);
-        }
+    // Salvar estado dos checkboxes
+    dayCheckboxes.forEach((checkbox, index) => {
+        checkbox.addEventListener('change', () => {
+            saveDayState(index, checkbox.checked);
+        });
+    });
+
+    function saveExercise(exercise) {
+        const exercises = JSON.parse(localStorage.getItem('exercises')) || [];
+        exercises.push(exercise);
+        localStorage.setItem('exercises', JSON.stringify(exercises));
     }
 
-    async function loadExercisesFromBackend() {
-        try {
-            const response = await fetch('https://your-backend-url.com/exercises');
-            if (!response.ok) {
-                throw new Error('Erro ao carregar do backend');
-            }
-            const exercises = await response.json();
-            exercises.forEach(addExerciseToList);
-        } catch (error) {
-            console.error('Erro:', error);
-        }
+    function loadExercises() {
+        const exercises = JSON.parse(localStorage.getItem('exercises')) || [];
+        exercises.forEach(addExerciseToList);
     }
 
     function addExerciseToList(exercise) {
@@ -87,5 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
             exercise.weight !== exerciseToRemove.weight
         );
         localStorage.setItem('exercises', JSON.stringify(updatedExercises));
+    }
+
+    function saveDayState(index, state) {
+        const dayStates = JSON.parse(localStorage.getItem('dayStates')) || [];
+        dayStates[index] = state;
+        localStorage.setItem('dayStates', JSON.stringify(dayStates));
+    }
+
+    function loadDayStates() {
+        const dayStates = JSON.parse(localStorage.getItem('dayStates')) || [];
+        dayCheckboxes.forEach((checkbox, index) => {
+            checkbox.checked = dayStates[index] || false;
+        });
     }
 });
